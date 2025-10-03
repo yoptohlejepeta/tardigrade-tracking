@@ -4,12 +4,14 @@ import numpy as np
 from scipy import ndimage as ndi
 import pandas as pd
 import os
-from src.watershed_image import process
+from src.watershed_image import watershed_pipe
+from rich import print as rprint
 
-input_path = "data/C9.tuns.mkv"
+
+input_path = "data/C4.tuns.mkv"
 images = iio.imiter(input_path)
 
-output_dir = f"images/{input_path.split('/')[-1]}"
+output_dir = f"images2/{input_path.split('/')[-1]}"
 os.makedirs(output_dir, exist_ok=True)
 print(output_dir)
 
@@ -20,18 +22,18 @@ with open(csv_path, "w") as f:
 
 frame_num = 0
 for image in images:
-    print(f"Processing frame {frame_num}")
+    rprint(f"Processing frame {frame_num}")
 
     try:
         image = image[:, 250:1500, :]
 
-        labels = process(image=image)
+        labels = watershed_pipe(image=image)
 
         unique_labels = np.unique(labels)
         unique_labels = unique_labels[unique_labels != 0]
 
         num_objects = len(unique_labels)
-        print(f"Frame {frame_num}: {num_objects} objects")
+        rprint(f"Frame {frame_num}: {num_objects} objects")
 
         object_data = []
         centroids = []
@@ -77,8 +79,9 @@ for image in images:
         print(f"Error in frame {frame_num}: {e}")
 
     frame_num += 1
-    if frame_num == 21:
-        break
+
+    # if frame_num == 21:
+    #     break
 
 print(f"Frames saved to {output_dir}")
 print(f"Object data saved to {csv_path}")

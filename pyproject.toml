@@ -5,14 +5,22 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "cairosvg>=2.8.2",
     "imageio[pyav]>=2.37.0",
+    "loguru>=0.7.3",
+    "lxml>=6.0.2",
     "marimo>=0.15.5",
     "matplotlib>=3.10.6",
     "opencv-python>=4.12.0.88",
     "pandas>=2.3.2",
+    "plotly>=6.3.0",
+    "pydantic-settings>=2.11.0",
+    "pygal>=3.0.5",
     "requests>=2.32.5",
+    "rich>=14.1.0",
     "scikit-image>=0.25.2",
     "segment-anything>=1.0,<2.0",
     "torch>=2.8.0",
     "torchvision>=0.23.0",
+    "tqdm>=4.67.1",
 ]

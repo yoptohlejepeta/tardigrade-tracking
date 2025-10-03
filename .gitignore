@@ -218,5 +218,6 @@ __marimo__/
 
 .envrc
 data/
-images/
-output/
+images*/
+*output*
+graphs/

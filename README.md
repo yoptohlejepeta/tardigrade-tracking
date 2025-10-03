@@ -1,6 +1,11 @@
-# Tardigrade tracking
+# Tardigrade tracking 🌊🐻
 
-popsat celnitost
+> [!NOTE]
+> `ffmpeg -framerate 60 -pattern_type glob -i "images3/C2.tuns.mkv/*.png" -c:v libx264 -pix_fmt yuv420p output.mp4`
+
+## TODO
+
+popsat clenitost
 
 staticke
 - plocha objektu
@@ -10,24 +15,16 @@ staticke
 - sfericita
 - excentricity
 - cirkularita
-- elipsa
-
-id snimku, id objektu
-
-poresit labelovani
+- aproximace objektu elipsou (velka + mala poloosa)
 
 dynamicke
 - delka trajektorie
 - displacement
 - směrovost pohybu
 
-<!-- - zakriveni? -->
-<!-- - center of mass -->
-<!-- - rychlost pohybu -->
-<!-- - delka trajektorie -->
-<!-- - total displacement -->
-<!-- - smerovost pohybu -->
-<!-- - aproximace objektu elipsou (velka + mala poloosa) -->
+id snimku, id objektu
+
+poresit labelovani
 
 tuns = vysychani
 reh = rehydrated
@@ -43,3 +40,16 @@ reh = rehydrated
 zaridit pristu na pocitac
 
 kazdy snimek do jedne slozky!
+
+
+## prezentace
+
+tuns snimek -> workflow segmentace -> pocty objektu (i v prubehu casu) -> seznam parametru + vykreslit
+
+tuns -> pocet objektu + graf pocet objektu pro reh
+
+pro dvojice tun a reh ( grafy clusteru )
+
+## aplikace
+
+napad na vytvoreni trackovaci aplikace, uzivatel uvidi souhrnne statistiky za video. moznost zakliknout objekt a sledovat jeho statistiky v prubehu videa.
