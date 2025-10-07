@@ -50,6 +50,12 @@ tuns -> pocet objektu + graf pocet objektu pro reh
 
 pro dvojice tun a reh ( grafy clusteru )
 
-## aplikace
+### grafy
 
-napad na vytvoreni trackovaci aplikace, uzivatel uvidi souhrnne statistiky za video. moznost zakliknout objekt a sledovat jeho statistiky v prubehu videa.
+- pridat grafy distribuco
+
+
+## 6.10.
+
+- c2, c3 reh
+- watershed

@@ -13,6 +13,7 @@ from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
 from loguru import logger
 
+
 def process_frame(args):
     """Worker function: Process a single frame and return data."""
     frame_num, image, output_dir = args
@@ -98,6 +99,14 @@ class Arguments(BaseSettings):
             validation_alias=AliasChoices("i", "input_path"),
         ),
     ]
+    n_workers: Annotated[
+        int,
+        Field(
+            title="Number of workers",
+            description="Number for `processes` param of `Pool` class.",
+            validation_alias=AliasChoices("n", "n_workers"),
+        ),
+    ]
 
 
 def main():
@@ -116,7 +125,6 @@ def main():
         "extent",
         "major_axis_length",
         "max_feret_diameter",
-        "min_feret_diameter",
         "minor_axis_length",
         "perimeter",
         "perimeter_complexity",
@@ -125,7 +133,7 @@ def main():
     ]
     pd.DataFrame(columns=csv_columns).to_csv(csv_path, index=False)  # pyright: ignore[reportArgumentType]
 
-    num_workers = max(1, cpu_count() - 1)
+    num_workers = max(1, args.n_workers)
     batch_size = 50
     logger.info(f"Using {num_workers} workers with batch size {batch_size}")
 

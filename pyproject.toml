@@ -19,8 +19,5 @@ dependencies = [
     "requests>=2.32.5",
     "rich>=14.1.0",
     "scikit-image>=0.25.2",
-    "segment-anything>=1.0,<2.0",
-    "torch>=2.8.0",
-    "torchvision>=0.23.0",
     "tqdm>=4.67.1",
 ]

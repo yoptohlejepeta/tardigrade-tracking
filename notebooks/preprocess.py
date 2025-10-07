@@ -26,10 +26,22 @@ def _():
 
     plt.axis("off")
 
-    image = iio.imread("data/C4.tuns.tif")
+    image = iio.imread("data/C2.tuns.tif")
     image = image[:, 250:1500 ,:]
     plt.imshow(image)
     return image, mo, ndi, np, plt
+
+
+@app.cell
+def _(image):
+    print(image.shape)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""## Unsharp masking""")
+    return
 
 
 @app.cell
@@ -62,11 +74,18 @@ def _(plt, unsharped):
 
 
 @app.cell
+def _(mo):
+    mo.md(r"""## Gaussův filtr""")
+    return
+
+
+@app.cell
 def _(gray, plt):
     from skimage.filters import gaussian
 
-    gray_gauss = gaussian(gray, sigma=2)
+    gray_gauss = gaussian(gray, sigma=3)
 
+    plt.axis("off")
     plt.imshow(gray_gauss, cmap="gray")
     return (gray_gauss,)
 
@@ -78,89 +97,32 @@ def _(mo):
 
 
 @app.cell
-def _(gray, plt):
+def _(gray_gauss, plt):
     from skimage.filters import threshold_otsu
 
-    otsu_image = gray > threshold_otsu(gray)
+    otsu_image = gray_gauss > threshold_otsu(gray_gauss)
 
     plt.axis("off")
     plt.imshow(otsu_image)
-    return otsu_image, threshold_otsu
-
-
-@app.cell
-def _(gray_gauss, plt, threshold_otsu):
-    otsu_gray = gray_gauss > threshold_otsu(gray_gauss)
-
-    plt.imshow(otsu_gray)
-    return (otsu_gray,)
-
-
-@app.cell
-def _(np, opening, otsu_gray, plt, remove_small_objects):
-    # eros = erosion(otsu_image, footprint=np.ones((3,3)))
-    removed_gaus = remove_small_objects(otsu_gray, min_size=2000)
-    # removed_gaus = opening(removed_gaus, footprint=np.ones((5,5)))
-    removed_gaus = opening(removed_gaus, footprint=np.ones((10,10)))
-    # removed_gaus = closing(removed_gaus, footprint=np.ones((5,5)))
-    # removed = closing(removed, footprint=disk(3))
-
-    plt.axis("off")
-    plt.imshow(removed_gaus)
-    return (removed_gaus,)
-
-
-@app.cell
-def _(ndi, np, peak_local_max, plt, removed_gaus, watershed):
-    final_image2 = removed_gaus
-
-    distance2 = ndi.distance_transform_edt(final_image2)
-    coords2 = peak_local_max(distance2, labels=final_image2, min_distance=35, threshold_rel=0.6)
-    mask2 = np.zeros(distance2.shape, dtype=bool)
-    mask2[tuple(coords2.T)] = True
-    markers2, _ = ndi.label(input=mask2)
-    labels2 = watershed(-distance2, markers2, mask=final_image2, connectivity=1)
-
-    plt.axis("off")
-    plt.imshow(labels2)
-    return (labels2,)
+    return (otsu_image,)
 
 
 @app.cell
 def _(mo):
-    mo.md(r"""## Rozložení velikosti objektů a odstranění malých objektů""")
+    mo.md(r"""## Morfologické operátory""")
     return
 
 
 @app.cell
-def _(ndi, np, otsu_image, plt):
-    closed_labels, num_objects = ndi.label(otsu_image)
+def _(np, otsu_image, plt):
+    from skimage.morphology import remove_small_objects, opening
 
-    closed_unique_labels = np.unique(closed_labels)
-    closed_unique_labels = closed_unique_labels[closed_unique_labels != 0]
-
-    object_sizes = np.bincount(closed_labels.ravel())[closed_unique_labels]
-
-    plt.hist(object_sizes, bins=100, edgecolor='black')
-    plt.xlabel('size')
-    plt.show()
-    return
-
-
-@app.cell
-def _(otsu_image, plt):
-    from skimage.morphology import remove_small_objects, disk
-    from skimage.morphology import closing, dilation, erosion, opening
-
-    # eros = erosion(otsu_image, footprint=np.ones((3,3)))
     removed = remove_small_objects(otsu_image, min_size=2000)
-    removed = closing(removed)
-    # removed = opening(removed, footprint=np.ones((30,30)))
-    # removed = closing(removed, footprint=disk(3))
+    removed = opening(removed, footprint=np.ones((10, 10)))
 
     plt.axis("off")
     plt.imshow(removed)
-    return disk, opening, remove_small_objects, removed
+    return (removed,)
 
 
 @app.cell
@@ -170,61 +132,38 @@ def _(mo):
 
 
 @app.cell
-def _(disk, ndi, np, plt, removed):
+def _(ndi, np, plt, removed):
     from skimage.segmentation import watershed
     from skimage.feature import peak_local_max
-    from skimage.morphology import h_maxima, local_maxima
+    from skimage.morphology import h_maxima, local_maxima, disk
     from scipy import ndimage
 
     final_image = removed
 
-    distance = ndi.distance_transform_edt(final_image)
-    coords = peak_local_max(distance, labels=final_image, min_distance=1, footprint=disk(45))
-    mask = np.zeros(distance.shape, dtype=bool)
+    distance = ndi.distance_transform_edt(removed)
+    coords = peak_local_max(
+        distance, labels=removed, min_distance=30, threshold_rel=0.5, footprint=disk(35)
+    )
+    mask = np.zeros(distance.shape, dtype=bool)  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
     mask[tuple(coords.T)] = True
-    markers, _ = ndi.label(input=mask)
-    labels = watershed(-distance, markers, mask=final_image, connectivity=1)
+    markers, _ = ndi.label(input=mask)  # pyright: ignore[reportGeneralTypeIssues]
+    labels = watershed(-distance, markers, mask=removed, connectivity=1)  # pyright: ignore
 
     plt.axis("off")
     plt.imshow(labels)
-    return peak_local_max, watershed
+    return coords, labels
 
 
 @app.cell
-def _(image, labels2, ndi, np, plt):
-    unique_labels = np.unique(labels2)
-    unique_labels = unique_labels[unique_labels != 0]  # Exclude background
-    centroids = []
-    for label in unique_labels:
-        centroid = ndi.center_of_mass(labels2 == label)
-        centroids.append(centroid)
-    centroids = np.array(centroids)
+def _(coords, image, labels, plt):
+    from skimage.color import label2rgb
 
-    plt.imshow(image)
-
-    for label in unique_labels:
-        label_mask = labels2 == label
-        colored_mask = np.zeros((*label_mask.shape, 4))
-        color = np.random.rand(3)
-        colored_mask[label_mask, :3] = color
-        colored_mask[label_mask, 3] = 0.5
-        plt.imshow(colored_mask)
-
-    plt.scatter(centroids[:, 1], centroids[:, 0], c='red', s=20, marker='o')
-    plt.axis("off")
+    plt.imshow(image, cmap='gray')
+    label_overlay = label2rgb(labels, image=image, bg_label=0, alpha=0.3)
+    plt.imshow(label_overlay)
+    plt.plot(coords[:, 1], coords[:, 0], 'o', markersize=3,color="red", label='Centroids')
+    plt.axis('off')
     plt.show()
-    return
-
-
-@app.cell
-def _():
-    # images = iio.imiter("./data/C2.tuns.mkv")
-
-    # count = 0
-    # for _ in images:
-    #     count += 1
-
-    # print(count)
     return
 
 
