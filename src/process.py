@@ -18,16 +18,12 @@ def watershed_pipe(image: np.ndarray) -> np.ndarray:
 
     gray = 1 / 3 * r + 1 / 3 * g + 1 / 3 * b
 
-    gauss = gaussian(gray, sigma=3)
+    gauss = gaussian(gray, sigma=2)
 
     otsu_image_gaus = gauss > threshold_otsu(gauss)
 
     removed = remove_small_objects(otsu_image_gaus, min_size=2000)
-    removed = opening(
-        removed,
-        footprint=disk(10),
-        # footprint=np.ones((10, 10,))
-    )
+    removed = opening(removed, footprint=disk(10))
 
     distance = ndi.distance_transform_edt(removed)
     coords = peak_local_max(
@@ -36,6 +32,6 @@ def watershed_pipe(image: np.ndarray) -> np.ndarray:
     mask = np.zeros(distance.shape, dtype=bool)  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
     mask[tuple(coords.T)] = True
     markers, _ = ndi.label(input=mask)  # pyright: ignore[reportGeneralTypeIssues]
-    labels = watershed(-distance, markers, mask=removed, connectivity=2)  # pyright: ignore
+    labels = watershed(-distance, markers, mask=removed, connectivity=1)  # pyright: ignore
 
     return labels
