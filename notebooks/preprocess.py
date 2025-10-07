@@ -26,7 +26,7 @@ def _():
 
     plt.axis("off")
 
-    image = iio.imread("data/C2.tuns.tif")
+    image = iio.imread("data/C4.tuns.tif")
     image = image[:, 250:1500 ,:]
     plt.imshow(image)
     return image, mo, ndi, np, plt
@@ -46,13 +46,22 @@ def _(mo):
 
 @app.cell
 def _(image, plt):
-    from skimage.filters import unsharp_mask
+    from skimage.filters import unsharp_mask, gaussian
 
     unsharped = unsharp_mask(image, amount=3)
 
     plt.axis("off")
     plt.imshow(unsharped)
-    return (unsharped,)
+    return gaussian, unsharped
+
+
+@app.cell
+def _(gaussian, plt, unsharped):
+    unsh_gaus = gaussian(unsharped, sigma=3)
+
+    plt.axis("off")
+    plt.imshow(unsh_gaus)
+    return (unsh_gaus,)
 
 
 @app.cell
@@ -62,15 +71,15 @@ def _(mo):
 
 
 @app.cell
-def _(plt, unsharped):
-    prep = unsharped
+def _(plt, unsh_gaus):
+    prep = unsh_gaus
 
     r, g, b = prep[:,:,0], prep[:,:,1], prep[:,:,2]
     gray = 1/3*r + 1/3*g + 1/3*b
 
     plt.axis("off")
     plt.imshow(gray,cmap="gray")
-    return (gray,)
+    return
 
 
 @app.cell
@@ -80,10 +89,10 @@ def _(mo):
 
 
 @app.cell
-def _(gray, plt):
-    from skimage.filters import gaussian
+def _(gaussian, plt, unsharped):
+    r2, g2, b2 = unsharped[:,:,0], unsharped[:,:,1], unsharped[:,:,2]
 
-    gray_gauss = gaussian(gray, sigma=3)
+    gray_gauss = gaussian(1/3*r2 + 1/3*g2 + 1/3*b2, sigma=3)
 
     plt.axis("off")
     plt.imshow(gray_gauss, cmap="gray")
@@ -100,7 +109,9 @@ def _(mo):
 def _(gray_gauss, plt):
     from skimage.filters import threshold_otsu
 
-    otsu_image = gray_gauss > threshold_otsu(gray_gauss)
+    binarized = gray_gauss
+
+    otsu_image = binarized > threshold_otsu(binarized)
 
     plt.axis("off")
     plt.imshow(otsu_image)
@@ -114,11 +125,15 @@ def _(mo):
 
 
 @app.cell
-def _(np, otsu_image, plt):
-    from skimage.morphology import remove_small_objects, opening
+def _(otsu_image, plt):
+    from skimage.morphology import remove_small_objects, opening, disk
 
     removed = remove_small_objects(otsu_image, min_size=2000)
-    removed = opening(removed, footprint=np.ones((10, 10)))
+    removed = opening(removed, 
+                      footprint=disk(10)
+                      # footprint=np.ones((8, 8)))
+                     )
+    # removed = opening(removed, footprint=disk(10))
 
     plt.axis("off")
     plt.imshow(removed)
@@ -135,14 +150,14 @@ def _(mo):
 def _(ndi, np, plt, removed):
     from skimage.segmentation import watershed
     from skimage.feature import peak_local_max
-    from skimage.morphology import h_maxima, local_maxima, disk
+    from skimage.morphology import h_maxima, local_maxima
     from scipy import ndimage
 
     final_image = removed
 
     distance = ndi.distance_transform_edt(removed)
     coords = peak_local_max(
-        distance, labels=removed, min_distance=30, threshold_rel=0.5, footprint=disk(35)
+        distance, labels=removed, min_distance=30, threshold_rel=0.5
     )
     mask = np.zeros(distance.shape, dtype=bool)  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
     mask[tuple(coords.T)] = True

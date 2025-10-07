@@ -9,8 +9,7 @@ import os
 from skimage.measure import regionprops
 from src.save import save_image
 from src.watershed_image import watershed_pipe
-from multiprocessing import Pool, cpu_count
-from tqdm import tqdm
+from multiprocessing import Pool
 from loguru import logger
 
 
@@ -136,16 +135,6 @@ def main():
     num_workers = max(1, args.n_workers)
     batch_size = 50
     logger.info(f"Using {num_workers} workers with batch size {batch_size}")
-
-    try:
-        metadata = iio.immeta(args.input_path)
-        total_frames = metadata.get("nframes", None)
-        logger.info(f"Total frames: {total_frames}")
-    except Exception as e:
-        logger.warning(
-            f"Could not determine total frames: {str(e)}. Progress bar may be inaccurate."
-        )
-        total_frames = None
 
     frame_iter = iio.imiter(args.input_path)
     batch_args = []

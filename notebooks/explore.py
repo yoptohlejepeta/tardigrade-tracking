@@ -8,8 +8,8 @@ app = marimo.App(width="full")
 def _():
     import pandas as pd
 
-    video = "C9.tuns.mkv"
-    data = pd.read_csv(f"images_test/{video}/objects_data.csv")
+    video = "C3.tuns.mkv"
+    data = pd.read_csv(f"images_test2/{video}/objects_data.csv")
     data.head()
     return data, video
 
@@ -106,11 +106,11 @@ def _(custom_style, data, pygal, video):
             truncate_label=-1,
             x_labels = [str(frame) if frame % 1000 == 0 else '' for frame in grouped_stats['frame']]
         )
-    
+
         line_chart_metric.add(f'Min', grouped_stats['min'].tolist(), )
         line_chart_metric.add(f'Max', grouped_stats['max'].tolist(), )
         line_chart_metric.add(f'Mean', grouped_stats['mean'].tolist(), )
-    
+
         line_chart_metric.render_to_file(f"graphs/metrics/{video}_{metric}.svg")
     return
 
