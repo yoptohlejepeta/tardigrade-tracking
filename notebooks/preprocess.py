@@ -57,7 +57,7 @@ def _(image, plt):
 
 @app.cell
 def _(gaussian, plt, unsharped):
-    unsh_gaus = gaussian(unsharped, sigma=3)
+    unsh_gaus = gaussian(unsharped, sigma=2)
 
     plt.axis("off")
     plt.imshow(unsh_gaus)
@@ -137,7 +137,7 @@ def _(otsu_image, plt):
 
     plt.axis("off")
     plt.imshow(removed)
-    return (removed,)
+    return disk, removed
 
 
 @app.cell
@@ -147,7 +147,7 @@ def _(mo):
 
 
 @app.cell
-def _(ndi, np, plt, removed):
+def _(disk, ndi, np, plt, removed):
     from skimage.segmentation import watershed
     from skimage.feature import peak_local_max
     from skimage.morphology import h_maxima, local_maxima
@@ -157,12 +157,12 @@ def _(ndi, np, plt, removed):
 
     distance = ndi.distance_transform_edt(removed)
     coords = peak_local_max(
-        distance, labels=removed, min_distance=30, threshold_rel=0.5
+        distance, labels=removed, min_distance=35, threshold_rel=0.5, footprint=disk(30)
     )
     mask = np.zeros(distance.shape, dtype=bool)  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
     mask[tuple(coords.T)] = True
     markers, _ = ndi.label(input=mask)  # pyright: ignore[reportGeneralTypeIssues]
-    labels = watershed(-distance, markers, mask=removed, connectivity=1)  # pyright: ignore
+    labels = watershed(-distance, markers, mask=removed, connectivity=1, watershed_line=True)  # pyright: ignore
 
     plt.axis("off")
     plt.imshow(labels)

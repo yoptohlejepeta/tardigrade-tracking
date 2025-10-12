@@ -1,0 +1,5 @@
+C2.tuns - min_distance = 35
+C3.tuns - min_distance = 40, unsharp(amount=2)
+C9.tuns - min_distance = 35, 
+
+10:29
