@@ -4,7 +4,7 @@ from scipy import ndimage as ndi
 from skimage.feature import peak_local_max
 from skimage.filters import gaussian, threshold_otsu, unsharp_mask
 from skimage.morphology import disk, opening, remove_small_objects
-from skimage.segmentation import watershed
+from skimage.segmentation import clear_border, watershed
 
 
 def watershed_pipe(image: np.ndarray) -> np.ndarray:
@@ -41,5 +41,6 @@ def watershed_pipe(image: np.ndarray) -> np.ndarray:
     mask[tuple(coords.T)] = True
     markers, _ = ndi.label(input=mask)  # pyright: ignore[reportGeneralTypeIssues]
     labels = watershed(-distance, markers, mask=removed, connectivity=1)  # pyright: ignore
+    labels = clear_border(labels)
 
     return labels

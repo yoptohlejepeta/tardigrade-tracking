@@ -17,7 +17,6 @@ def process_frame(args):
     """Worker function: Process a single frame and return data."""
     frame_num, image, output_dir = args
     try:
-        image = image[:, 0:1500, :]
         labels = watershed_pipe(image=image)
         unique_labels = np.unique(labels)
         unique_labels = unique_labels[unique_labels != 0]  # exclude background
@@ -45,9 +44,10 @@ def process_frame(args):
                     "max_feret_diameter": region.feret_diameter_max,
                     "minor_axis_length": region.minor_axis_length,
                     "perimeter": perimeter,
-                    "perimeter_complexity": (perimeter**2) / area,
+                    "compactness": (perimeter**2) / area,
                     "solidity": region.solidity,
                     "sphericity": (4 * np.pi * area) / (perimeter**2),
+                    "n_objects": len(regions),
                 }
             )
             centroids.append(region.centroid)
@@ -91,13 +91,21 @@ class Arguments(BaseSettings):
         ),
     ] = "images"
     input_path: Annotated[
-        str,
+        Path,
         Field(
             title="Input video",
             description="Path to video",
             validation_alias=AliasChoices("i", "input_path"),
         ),
     ]
+    pattern: Annotated[
+        str,
+        Field(
+            title="Pattern",
+            description="Pattern for input source",
+            validation_alias=AliasChoices("p", "pattern"),
+        ),
+    ] = "*"
     n_workers: Annotated[
         int,
         Field(
@@ -110,64 +118,67 @@ class Arguments(BaseSettings):
 
 def main():
     args = Arguments()  # pyright: ignore[reportCallIssue]
-    output_dir = f"{args.output_path}/{args.input_path.split('/')[-1]}"
-    os.makedirs(output_dir, exist_ok=True)
-    logger.info(f"Output directory: {output_dir}")
-    csv_path = f"{output_dir}/objects_data.csv"
-    csv_columns = [
-        "frame",
-        "label",
-        "centroid_y",
-        "centroid_x",
-        "area",
-        "eccentricity",
-        "extent",
-        "major_axis_length",
-        "max_feret_diameter",
-        "minor_axis_length",
-        "perimeter",
-        "perimeter_complexity",
-        "solidity",
-        "sphericity",
-    ]
-    pd.DataFrame(columns=csv_columns).to_csv(csv_path, index=False)  # pyright: ignore[reportArgumentType]
 
     num_workers = max(1, args.n_workers)
     batch_size = 50
     logger.info(f"Using {num_workers} workers with batch size {batch_size}")
 
-    frame_iter = iio.imiter(args.input_path)
-    batch_args = []
-    all_errors = []
-    frame_num = 0
+    for file in args.input_path.glob(args.pattern):
+        frame_iter = iio.imiter(file)
+        batch_args = []
+        all_errors = []
+        frame_num = 0
 
-    with Pool(num_workers) as pool:
-        for image in frame_iter:
-            batch_args.append((frame_num, image, output_dir))
-            if len(batch_args) >= batch_size:
+        output_dir = f"{args.output_path}/{file.name}"
+        os.makedirs(output_dir, exist_ok=True)
+        logger.info(f"Output directory: {output_dir}")
+        csv_path = f"{output_dir}/objects_data.csv"
+        csv_columns = [
+            "frame",
+            "label",
+            "centroid_y",
+            "centroid_x",
+            "area",
+            "eccentricity",
+            "extent",
+            "major_axis_length",
+            "max_feret_diameter",
+            "minor_axis_length",
+            "perimeter",
+            "compactness",
+            "solidity",
+            "sphericity",
+            "n_objects",
+        ]
+        pd.DataFrame(columns=csv_columns).to_csv(csv_path, index=False)  # pyright: ignore[reportArgumentType]
+
+        with Pool(num_workers) as pool:
+            for image in frame_iter:
+                batch_args.append((frame_num, image, output_dir))
+                if len(batch_args) >= batch_size:
+                    batch_results = pool.map(process_frame, batch_args)
+                    for batch_data, batch_error in batch_results:
+                        save_object_data(batch_data, csv_path)
+                        if batch_error:
+                            all_errors.append(batch_error)
+                    batch_args = []
+                frame_num += 1
+
+            if batch_args:
                 batch_results = pool.map(process_frame, batch_args)
                 for batch_data, batch_error in batch_results:
                     save_object_data(batch_data, csv_path)
                     if batch_error:
                         all_errors.append(batch_error)
-                batch_args = []
-            frame_num += 1
 
-        if batch_args:
-            batch_results = pool.map(process_frame, batch_args)
-            for batch_data, batch_error in batch_results:
-                save_object_data(batch_data, csv_path)
-                if batch_error:
-                    all_errors.append(batch_error)
-
-    if all_errors:
-        logger.warning(
-            f"Encountered {len(all_errors)} errors. First few: {all_errors[:3]}"
-        )
-    else:
-        logger.info("No errors encountered.")
-    logger.info(f"Frames saved to {output_dir}")
-    logger.info(f"Object data saved to {csv_path}")
+        if all_errors:
+            logger.warning(
+                f"Encountered {len(all_errors)} errors. First few: {all_errors[:3]}"
+            )
+        else:
+            logger.info("No errors encountered.")
+        logger.info(f"Frames saved to {output_dir}")
+        logger.info(f"Object data saved to {csv_path}")
 
 
 if __name__ == "__main__":

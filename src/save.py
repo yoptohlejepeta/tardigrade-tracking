@@ -1,6 +1,6 @@
 from pathlib import Path
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 
 def save_image(
@@ -11,7 +11,6 @@ def save_image(
 ) -> None:
     img = Image.fromarray(image).convert("RGBA")
     overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
-
     unique_labels = np.unique(labels)
     unique_labels = unique_labels[unique_labels != 0]
 
@@ -22,10 +21,21 @@ def save_image(
         overlay.paste(blue_layer, (0, 0), mask=mask_img)
 
     img = Image.alpha_composite(img, overlay)
-
     draw = ImageDraw.Draw(img)
+
+    font = ImageFont.load_default(size=24)
+
     if len(centroids) > 0:
-        for cy, cx in centroids:
+        for (cy, cx), label in zip(centroids, unique_labels):
             draw.ellipse((cx - 5, cy - 5, cx + 5, cy + 5), fill=(255, 0, 0, 255))
+
+            label_text = str(label)
+            bbox = draw.textbbox((cx, cy), label_text, font=font)
+            text_height = bbox[3] - bbox[1]
+
+            text_x = cx + 8
+            text_y = cy - text_height // 2
+
+            draw.text((text_x, text_y), label_text, fill=(255, 255, 0, 255), font=font)
 
     img.save(output_dir, "PNG")

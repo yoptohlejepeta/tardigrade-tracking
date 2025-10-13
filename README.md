@@ -1,4 +1,7 @@
 # Tardigrade tracking 🌊🐻
+```
+uv run python -m src.process_video -i data/T5.tuns.mkv -o processed_videos/Taxol -n 5
+```
 
 > [!NOTE]
 > `ffmpeg -framerate 60 -pattern_type glob -i "images3/C2.tuns.mkv/*.png" -c:v libx264 -pix_fmt yuv420p output.mp4`

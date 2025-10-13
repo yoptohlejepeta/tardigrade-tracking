@@ -8,8 +8,10 @@ app = marimo.App(width="full")
 def _():
     import pandas as pd
 
-    video = "C6.tuns.mkv"
-    data = pd.read_csv(f"images_test2/{video}/objects_data.csv")
+    group = "CytochalcasinD"
+    video = "CD5.tuns.mkv"
+    data = pd.read_csv(f"processed_videos/{group}/{video}/objects_data.csv")
+    # data = pd.read_csv(f"processed_video/")
     data.head()
     return data, video
 

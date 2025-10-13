@@ -222,6 +222,7 @@ images*/
 *output*
 graphs/
 runs/
+processed_videos/
 
 *.pt
 *.pth

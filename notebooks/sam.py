@@ -68,16 +68,16 @@ def _():
     # for mask in masks:
     #     area = mask['area']
     #     bbox = mask['bbox']
-    
+
     #     if 1000 < area < 10000:
     #         width, height = bbox[2], bbox[3]
     #         aspect_ratio = max(width, height) / min(width, height)
-        
+
     #         if aspect_ratio < 3:
     #             mask_pixels = gray_image[mask['segmentation']]
-            
+
     #             avg_intensity = np.mean(mask_pixels)
-            
+
     #             if avg_intensity > otsu_threshold:
     #                 filtered_masks.append(mask)
 
@@ -104,11 +104,11 @@ def _():
     # def show_masks(image, masks):
     #     plt.figure(figsize=(12, 8))
     #     plt.imshow(image)
-    
+
     #     for mask in masks:
     #         m = mask['segmentation']
     #         color = [0,0,1]
-        
+
     #         img = np.ones((m.shape[0], m.shape[1], 3))
     #         for i in range(3):
     #             img[:,:,i] = color[i]
@@ -116,7 +116,7 @@ def _():
 
     #     for centroid in centroids:
     #         plt.plot(centroid[0], centroid[1], 'ro')
-    
+
     #     plt.axis('off')
     #     plt.show()
 
@@ -130,7 +130,7 @@ def _():
 
     model = SAM("sam2.1_b.pt")
 
-    results = model("data/C2.tuns.tif")
+    results = model("data/C1.72Reh.tif")
     return (results,)
 
 
