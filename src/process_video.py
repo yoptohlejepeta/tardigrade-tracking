@@ -132,7 +132,7 @@ def main():
         output_dir = f"{args.output_path}/{file.name}"
         os.makedirs(output_dir, exist_ok=True)
         logger.info(f"Output directory: {output_dir}")
-        csv_path = f"{output_dir}/objects_data.csv"
+        csv_path = f"{output_dir}/{file.stem}.csv"
         csv_columns = [
             "frame",
             "label",

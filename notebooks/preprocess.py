@@ -26,8 +26,10 @@ def _():
 
     plt.axis("off")
 
-    image = iio.imread("data/C4.tuns.tif")
-    image = image[:, 250:1500 ,:]
+    image = iio.imread("data/Taxol/Reh/T1.24Reh.mkv", index=0)
+    # image = image[:, 250:1500 ,:]
+    height, width = image.shape[:2]
+    image[int(height * 0.8):, int(width * 0.7):] = 0
     plt.imshow(image)
     return image, mo, ndi, np, plt
 
@@ -35,6 +37,17 @@ def _():
 @app.cell
 def _(image):
     print(image.shape)
+    return
+
+
+@app.cell
+def _(gray_gauss, plt):
+    from skimage.exposure import equalize_adapthist
+
+    equalized = equalize_adapthist(gray_gauss)
+
+    plt.axis("off")
+    plt.imshow(equalized, cmap="gray")
     return
 
 
@@ -48,7 +61,7 @@ def _(mo):
 def _(image, plt):
     from skimage.filters import unsharp_mask, gaussian
 
-    unsharped = unsharp_mask(image, amount=3)
+    unsharped = unsharp_mask(image, amount=2)
 
     plt.axis("off")
     plt.imshow(unsharped)
@@ -128,12 +141,11 @@ def _(mo):
 def _(otsu_image, plt):
     from skimage.morphology import remove_small_objects, opening, disk
 
-    removed = remove_small_objects(otsu_image, min_size=2000)
-    removed = opening(removed, 
+    removed = opening(otsu_image, 
                       footprint=disk(10)
-                      # footprint=np.ones((8, 8)))
+                      # footprint=np.ones((5, 5))
                      )
-    # removed = opening(removed, footprint=disk(10))
+    removed = remove_small_objects(otsu_image, min_size=2000)
 
     plt.axis("off")
     plt.imshow(removed)
@@ -148,7 +160,7 @@ def _(mo):
 
 @app.cell
 def _(disk, ndi, np, plt, removed):
-    from skimage.segmentation import watershed
+    from skimage.segmentation import watershed, clear_border
     from skimage.feature import peak_local_max
     from skimage.morphology import h_maxima, local_maxima
     from scipy import ndimage
@@ -157,12 +169,13 @@ def _(disk, ndi, np, plt, removed):
 
     distance = ndi.distance_transform_edt(removed)
     coords = peak_local_max(
-        distance, labels=removed, min_distance=35, threshold_rel=0.5, footprint=disk(30)
+        distance, labels=removed, min_distance=30, threshold_rel=0.25, footprint=disk(45)
     )
     mask = np.zeros(distance.shape, dtype=bool)  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
     mask[tuple(coords.T)] = True
     markers, _ = ndi.label(input=mask)  # pyright: ignore[reportGeneralTypeIssues]
-    labels = watershed(-distance, markers, mask=removed, connectivity=1, watershed_line=True)  # pyright: ignore
+    labels = watershed(-distance, markers, mask=removed, connectivity=2, watershed_line=True)  # pyright: ignore
+    labels = clear_border(labels)
 
     plt.axis("off")
     plt.imshow(labels)

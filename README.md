@@ -62,3 +62,14 @@ pro dvojice tun a reh ( grafy clusteru )
 
 - c2, c3 reh
 - watershed
+
+20.10.
+
+- spojovani stredu podle bboxu
+- spojovani stredu podle max. vzdálenosti
+
+- rozdělení posunů
+
+- ( antimasky )
+
+- 5 tuns, 5 Reh

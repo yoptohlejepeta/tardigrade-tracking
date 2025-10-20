@@ -8,12 +8,14 @@ app = marimo.App(width="full")
 def _():
     import pandas as pd
 
-    group = "CytochalcasinD"
-    video = "CD5.tuns.mkv"
-    data = pd.read_csv(f"processed_videos/{group}/{video}/objects_data.csv")
+    group = "Nocodazole"
+    # video = "N7.tuns.mkv"
+    name = "N21.tuns"
+    video = f"{name}.mkv"
+    data = pd.read_csv(f"processed_videos/{group}/{video}/{name}.csv")
     # data = pd.read_csv(f"processed_video/")
     data.head()
-    return data, video
+    return data, group, video
 
 
 @app.cell
@@ -37,7 +39,7 @@ def _():
 
 
 @app.cell
-def _(clusters, custom_style, video):
+def _(clusters, custom_style, group, video):
     import pygal
 
     cluster_counts = clusters['num_labels'].value_counts().sort_index()
@@ -56,12 +58,12 @@ def _(clusters, custom_style, video):
 
     bar_chart.x_labels = cluster_counts.index.astype(str).tolist()
 
-    bar_chart.render_to_file(f'graphs/obj_count/{video}_hist.svg')
+    bar_chart.render_to_file(f'graphs/{group}/obj_count/{video}_hist.svg')
     return (pygal,)
 
 
 @app.cell
-def _(clusters, custom_style, pygal, video):
+def _(clusters, custom_style, group, pygal, video):
     line_chart = pygal.Line(
         title=video,
         x_title='Frame',
@@ -77,7 +79,7 @@ def _(clusters, custom_style, pygal, video):
 
     line_chart.add("Frames", clusters["num_labels"].tolist())
 
-    line_chart.render_to_file(f"graphs/obj_count/{video}_line.svg")
+    line_chart.render_to_file(f"graphs/{group}/obj_count/{video}_line.svg")
     # line_chart.render_to_png("line.png")
     return
 
@@ -91,9 +93,9 @@ def _(data):
 
 
 @app.cell
-def _(custom_style, data, pygal, video):
+def _(custom_style, data, group, pygal, video):
 
-    metrics = ['area', 'eccentricity','extent', 'major_axis_length', 'max_feret_diameter', 'minor_axis_length', 'perimeter', 'solidity', 'sphericity']
+    metrics = ['area', 'compactness', 'eccentricity','extent', 'major_axis_length', 'max_feret_diameter', 'minor_axis_length', 'perimeter', 'solidity', 'sphericity']
 
     for metric in metrics:
         grouped_stats = data.groupby('frame')[metric].agg(['min', 'max', 'mean']).reset_index()
@@ -113,7 +115,7 @@ def _(custom_style, data, pygal, video):
         line_chart_metric.add(f'Max', grouped_stats['max'].tolist(), )
         line_chart_metric.add(f'Mean', grouped_stats['mean'].tolist(), )
 
-        line_chart_metric.render_to_file(f"graphs/metrics/{video}_{metric}.svg")
+        line_chart_metric.render_to_file(f"graphs/{group}/metrics/{video}_{metric}.svg")
     return
 
 
