@@ -1,10 +1,12 @@
 # Tardigrade tracking 🌊🐻
-```
+```bash
 uv run python -m src.process_video -i data/T5.tuns.mkv -o processed_videos/Taxol -n 5
 ```
 
 > [!NOTE]
-> `ffmpeg -framerate 60 -pattern_type glob -i "images3/C2.tuns.mkv/*.png" -c:v libx264 -pix_fmt yuv420p output.mp4`
+> ```bash
+> ffmpeg -framerate 60 -pattern_type glob -i "images3/C2.tuns.mkv/*.png" -c:v libx264 -pix_fmt yuv420p output.mp4
+> ```
 
 ## TODO
 
@@ -45,25 +47,7 @@ zaridit pristu na pocitac
 kazdy snimek do jedne slozky!
 
 
-## prezentace
-
-tuns snimek -> workflow segmentace -> pocty objektu (i v prubehu casu) -> seznam parametru + vykreslit
-
-tuns -> pocet objektu + graf pocet objektu pro reh
-
-pro dvojice tun a reh ( grafy clusteru )
-
-### grafy
-
-- pridat grafy distribuco
-
-
-## 6.10.
-
-- c2, c3 reh
-- watershed
-
-20.10.
+## 20.10.
 
 - spojovani stredu podle bboxu
 - spojovani stredu podle max. vzdálenosti
@@ -73,3 +57,13 @@ pro dvojice tun a reh ( grafy clusteru )
 - ( antimasky )
 
 - 5 tuns, 5 Reh
+
+## Object tracking algoritmy
+
+- [Crocker-Grier](https://trackpy.readthedocs.io/en/stable/) 
+- [Linear assignment problem](https://pemami4911.github.io/pdfs/Machine_Learning_for_Data_Association_in_Multi_Object_Tracking.pdf) 
+- [Introduction to Assignment Methods in Tracking Systems](https://www.mathworks.com/help/fusion/ug/introduction-to-assignment-methods-in-tracking-systems.html) 
+
+TODO
+
+- cervena hranice

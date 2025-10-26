@@ -8,21 +8,27 @@ app = marimo.App(width="full")
 def _():
     import pandas as pd
 
-    group = "Nocodazole"
+    group = "Control"
     # video = "N7.tuns.mkv"
-    name = "N21.tuns"
-    video = f"{name}.mkv"
-    data = pd.read_csv(f"processed_videos/{group}/{video}/{name}.csv")
+    name = "C3.tuns"
+    data = pd.read_csv(f"images/{group}/{name}/{name}.csv")
     # data = pd.read_csv(f"processed_video/")
     data.head()
-    return data, group, video
+    return data, group, name
 
 
 @app.cell
 def _(data):
-    clusters = data.groupby("frame")["label"].nunique().reset_index(name="num_labels")
+    clusters = data.groupby("frame")["track_id"].nunique().rename("num_labels").reset_index()
     clusters
     return (clusters,)
+
+
+@app.cell
+def _(clusters, name):
+    # save csv withh columns frame and num_labels
+    clusters.to_csv(f"{name}_objects_count.csv", index=False)
+    return
 
 
 @app.cell
@@ -30,7 +36,6 @@ def _():
     from pygal.style import DefaultStyle
 
     custom_style = DefaultStyle
-    custom_style.font_family = "MartianMono NF"
     custom_style.title_font_size = 25.0
     custom_style.label_font_size = 20
     custom_style.major_label_font_size = 23

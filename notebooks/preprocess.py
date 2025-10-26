@@ -26,8 +26,7 @@ def _():
 
     plt.axis("off")
 
-    image = iio.imread("data/Taxol/Reh/T1.24Reh.mkv", index=0)
-    # image = image[:, 250:1500 ,:]
+    image = iio.imread("data/Control/C2.tuns.mkv", index=0)
     height, width = image.shape[:2]
     image[int(height * 0.8):, int(width * 0.7):] = 0
     plt.imshow(image)
@@ -41,17 +40,6 @@ def _(image):
 
 
 @app.cell
-def _(gray_gauss, plt):
-    from skimage.exposure import equalize_adapthist
-
-    equalized = equalize_adapthist(gray_gauss)
-
-    plt.axis("off")
-    plt.imshow(equalized, cmap="gray")
-    return
-
-
-@app.cell
 def _(mo):
     mo.md(r"""## Unsharp masking""")
     return
@@ -61,20 +49,11 @@ def _(mo):
 def _(image, plt):
     from skimage.filters import unsharp_mask, gaussian
 
-    unsharped = unsharp_mask(image, amount=2)
+    unsharped = unsharp_mask(image, amount=3)
 
     plt.axis("off")
     plt.imshow(unsharped)
     return gaussian, unsharped
-
-
-@app.cell
-def _(gaussian, plt, unsharped):
-    unsh_gaus = gaussian(unsharped, sigma=2)
-
-    plt.axis("off")
-    plt.imshow(unsh_gaus)
-    return (unsh_gaus,)
 
 
 @app.cell
@@ -84,15 +63,15 @@ def _(mo):
 
 
 @app.cell
-def _(plt, unsh_gaus):
-    prep = unsh_gaus
+def _(plt, unsharped):
+    prep = unsharped
 
     r, g, b = prep[:,:,0], prep[:,:,1], prep[:,:,2]
     gray = 1/3*r + 1/3*g + 1/3*b
 
     plt.axis("off")
     plt.imshow(gray,cmap="gray")
-    return
+    return (gray,)
 
 
 @app.cell
@@ -102,10 +81,8 @@ def _(mo):
 
 
 @app.cell
-def _(gaussian, plt, unsharped):
-    r2, g2, b2 = unsharped[:,:,0], unsharped[:,:,1], unsharped[:,:,2]
-
-    gray_gauss = gaussian(1/3*r2 + 1/3*g2 + 1/3*b2, sigma=3)
+def _(gaussian, gray, plt):
+    gray_gauss = gaussian(gray, sigma=3)
 
     plt.axis("off")
     plt.imshow(gray_gauss, cmap="gray")
@@ -143,7 +120,6 @@ def _(otsu_image, plt):
 
     removed = opening(otsu_image, 
                       footprint=disk(10)
-                      # footprint=np.ones((5, 5))
                      )
     removed = remove_small_objects(otsu_image, min_size=2000)
 
@@ -175,11 +151,68 @@ def _(disk, ndi, np, plt, removed):
     mask[tuple(coords.T)] = True
     markers, _ = ndi.label(input=mask)  # pyright: ignore[reportGeneralTypeIssues]
     labels = watershed(-distance, markers, mask=removed, connectivity=2, watershed_line=True)  # pyright: ignore
-    labels = clear_border(labels)
 
     plt.axis("off")
     plt.imshow(labels)
     return coords, labels
+
+
+@app.cell
+def _(coords, disk, image, labels, np, plt):
+    from PIL import Image, ImageDraw, ImageFont
+    from skimage.segmentation import find_boundaries
+    from skimage.morphology import dilation
+
+
+    def display_image_with_boundaries(
+        image: np.ndarray,
+        labels: np.ndarray,
+        coords: np.ndarray,  # centroids as (y, x) coordinates
+        track_ids: np.ndarray = None,  # optional track IDs
+        boundary_thickness: int = 2,
+    ) -> None:
+        # Convert to RGB
+        if image.ndim == 2:  # grayscale
+            img = Image.fromarray(image).convert("RGB")
+        else:
+            img = Image.fromarray(image.astype(np.uint8)).convert("RGB")
+    
+        draw = ImageDraw.Draw(img)
+    
+        # Find and draw boundaries
+        boundaries = find_boundaries(labels, mode="outer")
+        boundaries = dilation(boundaries, disk(boundary_thickness))
+        boundary_coords = np.argwhere(boundaries)
+    
+        for y, x in boundary_coords:
+            draw.point((x, y), fill=(255, 0, 0))
+    
+        # Load font
+        font = ImageFont.load_default(size=24)
+    
+        # Draw centroids and labels
+        if len(coords) > 0:
+            for i, (cy, cx) in enumerate(coords):
+                # Draw centroid point
+                draw.ellipse((cx - 5, cy - 5, cx + 5, cy + 5), fill=(255, 0, 0))
+                
+                # Draw track ID if provided
+                if track_ids is not None:
+                    label_text = str(int(track_ids[i]))
+                    bbox = draw.textbbox((cx, cy), label_text, font=font)
+                    text_height = bbox[3] - bbox[1]
+                
+                    text_x = cx + 8
+                    text_y = cy - text_height // 2
+                
+                    draw.text((text_x, text_y), label_text, fill=(0, 255, 0), font=font)
+    
+        plt.imshow(np.array(img))
+        plt.axis('off')
+        plt.show()
+
+    display_image_with_boundaries(image, labels, coords, track_ids=np.arange(1, len(coords)+1))
+    return
 
 
 @app.cell

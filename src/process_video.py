@@ -7,10 +7,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 import pandas as pd
 import os
 from skimage.measure import regionprops
+from src.info import loginfo
 from src.save import save_image
-from src.watershed_image import watershed_pipe
+from src.watershed.process import watershed_pipe
 from multiprocessing import Pool
-from loguru import logger
 
 
 def process_frame(args):
@@ -21,7 +21,7 @@ def process_frame(args):
         unique_labels = np.unique(labels)
         unique_labels = unique_labels[unique_labels != 0]  # exclude background
         num_objects = len(unique_labels)
-        logger.info(f"Frame {frame_num}: {num_objects} objects")
+        loginfo(f"Frame {frame_num}: {num_objects} objects")
 
         object_data = []
         centroids = []
@@ -63,7 +63,7 @@ def process_frame(args):
 
         return object_data, None
     except Exception as e:
-        logger.error(f"Error in frame {frame_num}: {str(e)}")
+        loginfo(f"Error in frame {frame_num}: {str(e)}")
         return [], f"Error in frame {frame_num}: {str(e)}"
 
 
@@ -73,11 +73,11 @@ def save_object_data(object_data, csv_path):
         if object_data:
             df = pd.DataFrame(object_data)
             df.to_csv(csv_path, mode="a", header=False, index=False)
-            logger.info(f"Saved {len(object_data)} object records to {csv_path}")
+            loginfo(f"Saved {len(object_data)} object records to {csv_path}")
         else:
-            logger.warning("No object data to save in this batch.")
+            loginfo("No object data to save in this batch.")
     except Exception as e:
-        logger.error(f"Failed to save CSV: {str(e)}")
+        loginfo(f"Failed to save CSV: {str(e)}")
         raise
 
 
@@ -121,7 +121,7 @@ def main():
 
     num_workers = max(1, args.n_workers)
     batch_size = 50
-    logger.info(f"Using {num_workers} workers with batch size {batch_size}")
+    loginfo(f"Using {num_workers} workers with batch size {batch_size}")
 
     for file in args.input_path.glob(args.pattern):
         frame_iter = iio.imiter(file)
@@ -131,7 +131,7 @@ def main():
 
         output_dir = f"{args.output_path}/{file.name}"
         os.makedirs(output_dir, exist_ok=True)
-        logger.info(f"Output directory: {output_dir}")
+        loginfo(f"Output directory: {output_dir}")
         csv_path = f"{output_dir}/{file.stem}.csv"
         csv_columns = [
             "frame",
@@ -172,13 +172,13 @@ def main():
                         all_errors.append(batch_error)
 
         if all_errors:
-            logger.warning(
+            loginfo(
                 f"Encountered {len(all_errors)} errors. First few: {all_errors[:3]}"
             )
         else:
-            logger.info("No errors encountered.")
-        logger.info(f"Frames saved to {output_dir}")
-        logger.info(f"Object data saved to {csv_path}")
+            loginfo("No errors encountered.")
+        loginfo(f"Frames saved to {output_dir}")
+        loginfo(f"Object data saved to {csv_path}")
 
 
 if __name__ == "__main__":

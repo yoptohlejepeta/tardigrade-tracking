@@ -31,9 +31,8 @@ def watershed_pipe(image: np.ndarray) -> np.ndarray:
     coords = peak_local_max(
         distance,
         labels=removed,
-        min_distance=30,
-        # threshold_rel=0.3,
-        footprint=disk(45),
+        min_distance=20,
+        footprint=disk(40),
         exclude_border=True,
     )
     mask = np.zeros(distance.shape, dtype=bool)  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]

@@ -7,7 +7,6 @@ from pygal.style import DefaultStyle
 from pygal import Bar, Line
 
 customStyle = DefaultStyle
-customStyle.font_family = "MartianMono NF"
 customStyle.title_font_size = 25
 customStyle.label_font_size = 20
 
@@ -66,7 +65,7 @@ if __name__ == "__main__":
         print(csv_file)
         data = pd.read_csv(csv_file)
         clusters = group_frames(data=data)
-    
+
         cluster_counts = clusters["num_labels"].value_counts().sort_index()
 
         video_name = csv_file.stem

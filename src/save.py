@@ -1,6 +1,8 @@
 from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
+from skimage.morphology import dilation, disk
+from skimage.segmentation import find_boundaries
 
 
 def save_image(
@@ -39,3 +41,39 @@ def save_image(
             draw.text((text_x, text_y), label_text, fill=(255, 255, 0, 255), font=font)
 
     img.save(output_dir, "PNG")
+
+
+def save_image_with_boundaries(
+    image: np.ndarray,
+    labels: np.ndarray,
+    centroids: np.ndarray,
+    track_ids: np.ndarray,
+    output_path: Path,
+    boundary_thickness: int = 2,
+) -> None:
+    img = Image.fromarray(image).convert("RGB")
+    draw = ImageDraw.Draw(img)
+    
+    boundaries = find_boundaries(labels, mode="outer")
+    boundaries = dilation(boundaries, disk(boundary_thickness))
+    boundary_coords = np.argwhere(boundaries)
+    
+    for y, x in boundary_coords:
+        draw.point((x, y), fill=(255, 0, 0))
+    
+    font = ImageFont.load_default(size=24)
+    
+    if len(centroids) > 0:
+        for (cy, cx), track_id in zip(centroids, track_ids):
+            draw.ellipse((cx - 5, cy - 5, cx + 5, cy + 5), fill=(255, 0, 0))
+            
+            label_text = str(int(track_id))
+            bbox = draw.textbbox((cx, cy), label_text, font=font)
+            text_height = bbox[3] - bbox[1]
+            
+            text_x = cx + 8
+            text_y = cy - text_height // 2
+            
+            draw.text((text_x, text_y), label_text, fill=(0, 255, 0), font=font)
+    
+    img.save(output_path, "PNG")

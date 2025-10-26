@@ -223,6 +223,9 @@ images*/
 graphs/
 runs/
 processed_videos/
+labels/
 
 *.pt
 *.pth
+*.mp4
+*.csv
