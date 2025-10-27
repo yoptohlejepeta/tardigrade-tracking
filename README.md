@@ -67,3 +67,9 @@ kazdy snimek do jedne slozky!
 TODO
 
 - cervena hranice
+
+
+taxol od 1 a 5 (reh, tracking)
+
+
+priklady snimku, spatne podminky (svetlo atd.)
