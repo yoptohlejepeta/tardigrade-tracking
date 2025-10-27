@@ -52,7 +52,7 @@ def _():
     # )
 
     # # Load image
-    image = iio.imread("data/C2.tuns.tif")
+    image = iio.imread("data/C1.72Reh.tif")
     # image = image[:, 0:1500, :]
 
     # if len(image.shape) == 3:

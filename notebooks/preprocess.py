@@ -1,7 +1,13 @@
 import marimo
 
-__generated_with = "0.15.5"
-app = marimo.App(width="full")
+__generated_with = "0.17.0"
+app = marimo.App(width="medium")
+
+
+@app.cell
+def _():
+    import marimo as mo
+    return (mo,)
 
 
 @app.cell
@@ -18,7 +24,6 @@ def _(mo):
 
 @app.cell
 def _():
-    import marimo as mo
     import imageio.v3 as iio
     import matplotlib.pyplot as plt
     import numpy as np
@@ -31,12 +36,37 @@ def _():
     plt.figure(figsize=(10,10))
     plt.axis("off")
     plt.imshow(image)
-    return image, mo, ndi, np, plt
+    return image, ndi, np, plt
 
 
 @app.cell
 def _(image):
     print(image.shape)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    ## Adapt hist eq
+
+    /// attention
+    Nepoužívá se
+    ///
+    """
+    )
+    return
+
+
+@app.cell
+def _(image, plt):
+    from skimage.exposure import equalize_adapthist
+
+    equalized = equalize_adapthist(image, clip_limit=0.01)
+
+    plt.axis("off")
+    plt.imshow(equalized)
     return
 
 
@@ -131,7 +161,7 @@ def _(otsu_image, plt):
     plt.figure(figsize=(10,10))
     plt.axis("off")
     plt.imshow(removed)
-    return disk, removed
+    return disk, remove_small_objects, removed
 
 
 @app.cell
@@ -144,7 +174,6 @@ def _(mo):
 def _(disk, ndi, np, plt, removed):
     from skimage.segmentation import watershed, clear_border
     from skimage.feature import peak_local_max
-    from skimage.morphology import h_maxima, local_maxima
     from scipy import ndimage
 
     final_image = removed
@@ -153,7 +182,7 @@ def _(disk, ndi, np, plt, removed):
     coords = peak_local_max(
         distance, labels=removed, min_distance=30, threshold_rel=0.25, footprint=disk(45)
     )
-    mask = np.zeros(distance.shape, dtype=bool)  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
+    mask = np.zeros(distance.shape, dtype=bool)
     mask[tuple(coords.T)] = True
     markers, _ = ndi.label(input=mask)  # pyright: ignore[reportGeneralTypeIssues]
     labels = watershed(-distance, markers, mask=removed, connectivity=2, watershed_line=True)  # pyright: ignore
