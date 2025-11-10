@@ -229,3 +229,6 @@ labels/
 *.pth
 *.mp4
 *.csv
+*.png
+tif_stacks/
+kontrola/

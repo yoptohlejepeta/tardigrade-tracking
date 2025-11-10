@@ -8,6 +8,14 @@ uv run python -m src.process_video -i data/T5.tuns.mkv -o processed_videos/Taxol
 > ffmpeg -framerate 60 -pattern_type glob -i "images3/C2.tuns.mkv/*.png" -c:v libx264 -pix_fmt yuv420p output.mp4
 > ```
 
+
+> [!NOTE]
+> copy all csv files
+> ```bash
+> rsync -avz -e "ssh -J pkotlan@10.12.0.5" --include='*/' --include='*.csv' --exclude='*' pkotlan@punta-gpus:/localdata/Scratch/zposelShare/CENAB/DATAImages/ .
+> ```
+
+
 ## TODO
 
 popsat clenitost
@@ -73,3 +81,50 @@ taxol od 1 a 5 (reh, tracking)
 
 
 priklady snimku, spatne podminky (svetlo atd.)
+
+
+---
+
+
+- carovy graf pro kazdou skupinu (prumer ze vsech objektu)
+- boxplot
+- porovnani skupin (idealne Control Nocodazole)
+
+pridat displacement, mean square displacement, area, zmena tvaru (feret)
+aktivni/neaktivni
+
+1. selekce snimku
+2. jaka videa dohromady, seskupit podle OPUS.xlsx
+
+jak spocitat mobility index (nebo podobnou metriku)
+
+
+pozor na skupinu
+
+objekty pres vsehna videa v dane skupine
+
+1. vyfiltrovat objekty u kterých se mění indexy
+2. analýza mobility - displacement (zkusit zatim jen tunsy, celkovy displacement)
+
+
+
+suma delta r na druhou
+
+stredni displacement
+
+potom area (stejny postup)
+
+pustit C8.tuns, C15.tuns
+jeste dve videa z nocodazolu
+
+
+- dodelat nocodazole
+
+
+## Revize
+
+- najít problémy
+    1. analýza toho jak segmentovat reh videa (adaptace watershedu?)
+    2. tracking zelvusek
+    3. analyza na GPU
+
