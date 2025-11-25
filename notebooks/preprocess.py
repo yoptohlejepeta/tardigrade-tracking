@@ -26,8 +26,7 @@ def _():
 
     plt.axis("off")
 
-    image = iio.imread("data/C4.tuns.tif")
-    image = image[:, 250:1500 ,:]
+    image = iio.imread("data/C4.tuns.mkv", index=0)
     plt.imshow(image)
     return image, mo, ndi, np, plt
 
@@ -48,7 +47,7 @@ def _(mo):
 def _(image, plt):
     from skimage.filters import unsharp_mask, gaussian
 
-    unsharped = unsharp_mask(image, amount=3)
+    unsharped = unsharp_mask(image, amount=10, channel_axis=2)
 
     plt.axis("off")
     plt.imshow(unsharped)
@@ -79,7 +78,7 @@ def _(plt, unsh_gaus):
 
     plt.axis("off")
     plt.imshow(gray,cmap="gray")
-    return
+    return (gray,)
 
 
 @app.cell
@@ -96,7 +95,7 @@ def _(gaussian, plt, unsharped):
 
     plt.axis("off")
     plt.imshow(gray_gauss, cmap="gray")
-    return (gray_gauss,)
+    return
 
 
 @app.cell
@@ -106,10 +105,10 @@ def _(mo):
 
 
 @app.cell
-def _(gray_gauss, plt):
+def _(gray, plt):
     from skimage.filters import threshold_otsu
 
-    binarized = gray_gauss
+    binarized = gray
 
     otsu_image = binarized > threshold_otsu(binarized)
 
@@ -157,12 +156,12 @@ def _(disk, ndi, np, plt, removed):
 
     distance = ndi.distance_transform_edt(removed)
     coords = peak_local_max(
-        distance, labels=removed, min_distance=35, threshold_rel=0.5, footprint=disk(30)
+        distance, labels=removed, min_ditance=10, footprint=disk(60)
     )
     mask = np.zeros(distance.shape, dtype=bool)  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
     mask[tuple(coords.T)] = True
     markers, _ = ndi.label(input=mask)  # pyright: ignore[reportGeneralTypeIssues]
-    labels = watershed(-distance, markers, mask=removed, connectivity=1, watershed_line=True)  # pyright: ignore
+    labels = watershed(-distance, markers, mask=removed, connectivity=2, watershed_line=True)  # pyright: ignore
 
     plt.axis("off")
     plt.imshow(labels)

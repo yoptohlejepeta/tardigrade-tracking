@@ -225,3 +225,5 @@ runs/
 
 *.pt
 *.pth
+*.png
+*.csv
