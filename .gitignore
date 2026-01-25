@@ -215,8 +215,6 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-.direnv/
-
 data/
 images*/
 *output*
@@ -230,5 +228,6 @@ labels/
 *.mp4
 *.csv
 *.png
+*.npy
 tif_stacks/
 kontrola/

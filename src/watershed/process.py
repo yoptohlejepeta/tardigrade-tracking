@@ -13,12 +13,12 @@ def watershed_pipe(image: np.ndarray) -> np.ndarray:
 
     """
     height, width = image.shape[:2]
-    image[int(height * 0.8):, int(width * 0.7):] = 0
+    image[int(height * 0.8) :, int(width * 0.7) :] = 0
 
     unsharped = unsharp_mask(image, amount=3)
     r, g, b = unsharped[:, :, 0], unsharped[:, :, 1], unsharped[:, :, 2]
 
-    gray = 1 / 3 * r + 1 / 3 * g + 1 / 3 * b
+    gray = (1 / 3 * r) + (1 / 3 * g) + (1 / 3 * b)
 
     gauss = gaussian(gray, sigma=3)
 
@@ -38,13 +38,7 @@ def watershed_pipe(image: np.ndarray) -> np.ndarray:
     mask = np.zeros(distance.shape, dtype=bool)  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
     mask[tuple(coords.T)] = True
     markers, _ = ndi.label(input=mask)  # pyright: ignore[reportGeneralTypeIssues]
-    labels = watershed(
-        -distance,  # pyright: ignore
-        markers,
-        mask=removed,
-        connectivity=2,
-        watershed_line=True,
-    )
+    labels = watershed(-distance, markers, mask=removed, connectivity=2)  # pyright: ignore
     labels = clear_border(labels)
 
     return labels

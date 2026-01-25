@@ -1,13 +1,15 @@
+import os
+from multiprocessing import Pool
 from pathlib import Path
 from typing import Annotated
+
 import imageio.v3 as iio
 import numpy as np
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-import os
+
 from src.info import loginfo
 from src.watershed.process import watershed_pipe
-from multiprocessing import Pool
 
 
 def process_frame(args):
@@ -15,7 +17,7 @@ def process_frame(args):
     try:
         labels = watershed_pipe(image=image)
         output_path = f"{output_dir}/frame_{frame_num:06d}.npy"
-        np.save(output_path, {"image": image, "labels": labels})
+        np.save(output_path, labels)
         loginfo(f"Frame {frame_num}: extracted and saved labels")
         return None
     except Exception as e:
@@ -53,12 +55,19 @@ class Arguments(BaseSettings):
             validation_alias=AliasChoices("n", "n_workers"),
         ),
     ]
+    frame_step: Annotated[
+        int,
+        Field(
+            title="Process every nth frame",
+            validation_alias=AliasChoices("s", "frame_step"),
+        ),
+    ] = 1
 
 
 def main():
-    args = Arguments()
+    args = Arguments()  # pyright: ignore[reportCallIssue]
     num_workers = max(1, args.n_workers)
-    batch_size = 50
+    batch_size = 5
     loginfo(f"Using {num_workers} workers with batch size {batch_size}")
 
     for file in args.input_path.glob(args.pattern):
@@ -73,13 +82,16 @@ def main():
 
         with Pool(num_workers) as pool:
             for image in frame_iter:
-                batch_args.append((frame_num, image, output_dir))
-                if len(batch_args) >= batch_size:
-                    batch_results = pool.map(process_frame, batch_args)
-                    for err in batch_results:
-                        if err:
-                            all_errors.append(err)
-                    batch_args = []
+                if frame_num % args.frame_step == 0:
+                    batch_args.append((frame_num, image, output_dir))
+                    if len(batch_args) >= batch_size:
+                        batch_results = pool.map_async(process_frame, batch_args).get(
+                            timeout=60
+                        )
+                        for err in batch_results:
+                            if err:
+                                all_errors.append(err)
+                        batch_args = []
                 frame_num += 1
 
             if batch_args:
@@ -87,9 +99,9 @@ def main():
                 for err in batch_results:
                     if err:
                         all_errors.append(err)
-        
+
         loginfo(f"Processed {frame_num} frames, saved to {output_dir}")
-        
+
         if all_errors:
             loginfo(f"Encountered {len(all_errors)} errors")
         else:
