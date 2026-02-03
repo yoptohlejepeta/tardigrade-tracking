@@ -10,23 +10,8 @@ def _():
     from pathlib import Path
     import numpy as np
     import imageio.v3 as iio
-    from PIL import Image
-    return Image, iio, mo, np
-
-
-@app.cell
-def _(mo):
-    mo.md(r"""
-    ## Data folder
-    """)
-    return
-
-
-@app.cell
-def _(mo):
-    data_path = mo.ui.file_browser(selection_mode="directory", multiple=False)
-    data_path
-    return (data_path,)
+    from PIL import Image, ImageDraw, ImageFont
+    return Image, ImageDraw, ImageFont, iio, mo, np
 
 
 @app.cell
@@ -39,30 +24,24 @@ def _(mo):
 
 @app.cell
 def _(mo):
+    # slozka s obrazky a labely
     labels_path = mo.ui.file_browser(selection_mode="directory", multiple=False)
     labels_path
     return (labels_path,)
 
 
 @app.cell
-def _(labels_path):
-    print(labels_path.name())
-    return
-
-
-@app.cell
 def _(labels_path, np):
     if labels_path.value:
-        labels = labels_path.path().glob("*")
+        labels = labels_path.path().glob("*.npy")
         label_ims = {}
         for label in labels:
-            frame_num = int(label.stem.split("_")[1])
-            label_ims[frame_num] = np.load(label)
+            label_ims[label.stem] = np.load(label)
     return (label_ims,)
 
 
 @app.cell
-def _(Image, data_path, iio, label_ims, labels_path, mo, np):
+def _(Image, ImageDraw, ImageFont, iio, label_ims, labels_path, mo, np):
     import matplotlib.pyplot as plt
 
     colors = [
@@ -76,25 +55,34 @@ def _(Image, data_path, iio, label_ims, labels_path, mo, np):
 
     processed_frames = []
     alpha = 0.5
-    video_path = data_path.path() / f"{labels_path.name()}.mkv"
 
     for num, mask in label_ims.items():
-        frame = iio.imread(video_path, index=num)
-    
+        frame = iio.imread(labels_path.path() / f"{num}.png")
         overlay = np.zeros_like(frame)
-    
         object_ids = np.unique(mask)
         object_ids = object_ids[object_ids != 0]
-    
+
         for obj_id in object_ids:
             color = colors[int(obj_id) % len(colors)]
             overlay[mask == obj_id] = color
 
         blended = (frame * (1 - alpha) + overlay * alpha).astype(np.uint8)
     
+        img = Image.fromarray(blended)
+        draw = ImageDraw.Draw(img)
+        font = ImageFont.load_default(size=24)
+    
+        for obj_id in object_ids:
+            y, x = np.where(mask == obj_id)
+            if len(y) > 0:
+                cx, cy = int(np.mean(x)), int(np.mean(y))
+                for adj_x, adj_y in [(-2,-2), (-2,2), (2,-2), (2,2), (-2,0), (2,0), (0,-2), (0,2)]:
+                    draw.text((cx+adj_x, cy+adj_y), str(obj_id), fill=(0, 0, 0), font=font)
+                draw.text((cx, cy), str(obj_id), fill=(255, 255, 0), font=font)
+    
         processed_frames.append(
             mo.image(
-                src=Image.fromarray(blended), 
+                src=img, 
                 caption=f"Frame: {num}",
                 width=800
             )
