@@ -25,7 +25,7 @@ def watershed_pipe(image: np.ndarray) -> np.ndarray:
     otsu_image_gaus = gauss > threshold_otsu(gauss)
 
     removed = opening(otsu_image_gaus, footprint=disk(10))
-    removed = remove_small_objects(otsu_image_gaus, min_size=2000)
+    removed = remove_small_objects(removed, min_size=2000)
 
     distance = ndi.distance_transform_edt(removed)
     coords = peak_local_max(

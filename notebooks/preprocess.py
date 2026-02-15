@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.17.0"
+__generated_with = "0.19.6"
 app = marimo.App(width="medium")
 
 
@@ -12,31 +12,40 @@ def _():
 
 @app.cell
 def _(mo):
-    mo.md(r"""# Zpracování snímků želvušek""")
+    mo.md(r"""
+    # Zpracování snímků želvušek
+    """)
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(r"""## Původní snímek""")
+    mo.md(r"""
+    ## Původní snímek
+    """)
     return
 
 
 @app.cell
-def _():
+def _(mo):
     import imageio.v3 as iio
     import matplotlib.pyplot as plt
     import numpy as np
     from scipy import ndimage as ndi
 
+    image_path = mo.ui.file_browser(multiple=False)
+    image_path
+    return iio, image_path, ndi, np, plt
 
-    image = iio.imread("data/Control/C2.tuns.mkv", index=0)
+
+@app.cell
+def _(iio, image_path, mo):
+    image = iio.imread(image_path.path(index=0), index=0)
     height, width = image.shape[:2]
-    image[int(height * 0.8):, int(width * 0.7):] = 0
-    plt.figure(figsize=(10,10))
-    plt.axis("off")
-    plt.imshow(image)
-    return image, ndi, np, plt
+    image[int(height * 0.8) :, int(width * 0.7) :] = 0
+
+    mo.image(image)
+    return (image,)
 
 
 @app.cell
@@ -47,69 +56,46 @@ def _(image):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
-    ## Adapt hist eq
-
-    /// attention
-    Nepoužívá se
-    ///
-    """
-    )
+    mo.md(r"""
+    ## Unsharp masking
+    """)
     return
 
 
 @app.cell
-def _(image, plt):
-    from skimage.exposure import equalize_adapthist
-
-    equalized = equalize_adapthist(image, clip_limit=0.01)
-
-    plt.axis("off")
-    plt.imshow(equalized)
-    return
-
-
-@app.cell
-def _(mo):
-    mo.md(r"""## Unsharp masking""")
-    return
-
-
-@app.cell
-def _(image, plt):
+def _(image, mo):
     from skimage.filters import unsharp_mask, gaussian
 
     unsharped = unsharp_mask(image, amount=3)
 
-    plt.figure(figsize=(10,10))
-    plt.axis("off")
-    plt.imshow(unsharped)
+    mo.image(unsharped)
     return gaussian, unsharped
 
 
 @app.cell
 def _(mo):
-    mo.md(r"""## Grayscale""")
+    mo.md(r"""
+    ## Grayscale
+    """)
     return
 
 
 @app.cell
-def _(plt, unsharped):
+def _(mo, unsharped):
     prep = unsharped
 
-    r, g, b = prep[:,:,0], prep[:,:,1], prep[:,:,2]
-    gray = 1/3*r + 1/3*g + 1/3*b
+    r, g, b = prep[:, :, 0], prep[:, :, 1], prep[:, :, 2]
+    gray = 1 / 3 * r + 1 / 3 * g + 1 / 3 * b
 
-    plt.figure(figsize=(10,10))
-    plt.axis("off")
-    plt.imshow(gray,cmap="gray")
+    mo.image(gray)
     return (gray,)
 
 
 @app.cell
 def _(mo):
-    mo.md(r"""## Gaussův filtr""")
+    mo.md(r"""
+    ## Gaussův filtr
+    """)
     return
 
 
@@ -117,7 +103,7 @@ def _(mo):
 def _(gaussian, gray, plt):
     gray_gauss = gaussian(gray, sigma=3)
 
-    plt.figure(figsize=(10,10))
+    plt.figure(figsize=(10, 10))
     plt.axis("off")
     plt.imshow(gray_gauss, cmap="gray")
     return (gray_gauss,)
@@ -125,7 +111,9 @@ def _(gaussian, gray, plt):
 
 @app.cell
 def _(mo):
-    mo.md(r"""## Binarizace""")
+    mo.md(r"""
+    ## Binarizace
+    """)
     return
 
 
@@ -133,11 +121,10 @@ def _(mo):
 def _(gray_gauss, plt):
     from skimage.filters import threshold_otsu
 
-    binarized = gray_gauss
 
-    otsu_image = binarized > threshold_otsu(binarized)
+    otsu_image = gray_gauss > threshold_otsu(gray_gauss)
 
-    plt.figure(figsize=(10,10))
+    plt.figure(figsize=(10, 10))
     plt.axis("off")
     plt.imshow(otsu_image)
     return (otsu_image,)
@@ -145,28 +132,34 @@ def _(gray_gauss, plt):
 
 @app.cell
 def _(mo):
-    mo.md(r"""## Morfologické operátory""")
+    mo.md(r"""
+    ## Morfologické operátory
+    """)
     return
 
 
 @app.cell
 def _(otsu_image, plt):
-    from skimage.morphology import remove_small_objects, opening, disk
+    from skimage.morphology import remove_small_objects, opening, disk, erosion, dilation, remove_small_holes, closing
 
-    removed = opening(otsu_image, 
-                      footprint=disk(10)
-                     )
-    removed = remove_small_objects(otsu_image, min_size=2000)
+    removed = opening(
+        otsu_image,
+        disk(10),
+    )
 
-    plt.figure(figsize=(10,10))
+    removed = remove_small_objects(removed, min_size=2000)
+
+    plt.figure(figsize=(10, 10))
     plt.axis("off")
     plt.imshow(removed)
-    return disk, remove_small_objects, removed
+    return disk, removed
 
 
 @app.cell
 def _(mo):
-    mo.md(r"""## Watershed""")
+    mo.md(r"""
+    ## Watershed
+    """)
     return
 
 
@@ -180,14 +173,21 @@ def _(disk, ndi, np, plt, removed):
 
     distance = ndi.distance_transform_edt(removed)
     coords = peak_local_max(
-        distance, labels=removed, min_distance=30, threshold_rel=0.25, footprint=disk(45)
+        distance,
+        labels=removed,
+        min_distance=20,
+        # threshold_rel=0.25,
+        footprint=disk(40),
+        exclude_border=True,
     )
     mask = np.zeros(distance.shape, dtype=bool)
     mask[tuple(coords.T)] = True
     markers, _ = ndi.label(input=mask)  # pyright: ignore[reportGeneralTypeIssues]
-    labels = watershed(-distance, markers, mask=removed, connectivity=2, watershed_line=True)  # pyright: ignore
+    labels = watershed(
+        -distance, markers, mask=removed, connectivity=2
+    )  # pyright: ignore
 
-    plt.figure(figsize=(50,50))
+    plt.figure(figsize=(50, 50))
     plt.axis("off")
     plt.imshow(labels)
     plt.show()
@@ -195,10 +195,10 @@ def _(disk, ndi, np, plt, removed):
 
 
 @app.cell
-def _(coords, disk, image, labels, np, plt):
+def _(coords, image, labels, np, plt):
     from PIL import Image, ImageDraw, ImageFont
     from skimage.segmentation import find_boundaries
-    from skimage.morphology import dilation
+    # from skimage.morphology import dilation
 
 
     def display_image_with_boundaries(
@@ -216,7 +216,7 @@ def _(coords, disk, image, labels, np, plt):
         draw = ImageDraw.Draw(img)
 
         boundaries = find_boundaries(labels, mode="outer")
-        boundaries = dilation(boundaries, disk(boundary_thickness))
+        # boundaries = dilation(boundaries, disk(boundary_thickness))
         boundary_coords = np.argwhere(boundaries)
 
         for y, x in boundary_coords:
@@ -233,33 +233,33 @@ def _(coords, disk, image, labels, np, plt):
                     bbox = draw.textbbox((cx, cy), label_text, font=font)
                     text_height = bbox[3] - bbox[1]
 
-
                     text_x = cx + 8
                     text_y = cy - text_height // 2
 
-                    draw.text((text_x, text_y), label_text, fill=(0, 255, 0), font=font)
+                    # draw.text(
+                    #     (text_x, text_y), label_text, fill=(0, 255, 0), font=font
+                    # )
 
-        plt.figure(figsize=(50,50))
-        plt.axis('off')
+        plt.figure(figsize=(50, 50))
+        plt.axis("off")
         plt.imshow(np.array(img))
         plt.show()
 
-    display_image_with_boundaries(image, labels, coords, track_ids=np.arange(1, len(coords)+1))
+
+    display_image_with_boundaries(
+        image, labels, coords, track_ids=np.arange(1, len(coords) + 1)
+    )
     return
 
 
 @app.cell
-def _(coords, image, labels, plt):
+def _(image, labels, mo, plt):
     from skimage.color import label2rgb
 
-    plt.imshow(image, cmap='gray')
+    plt.imshow(image, cmap="gray")
     label_overlay = label2rgb(labels, image=image, bg_label=0, alpha=0.3)
-    plt.imshow(label_overlay)
-    plt.plot(coords[:, 1], coords[:, 0], 'o', markersize=3,color="red", label='Centroids')
 
-    plt.figure(figsize=(10,10))
-    plt.axis('off')
-    plt.show()
+    mo.image(label_overlay)
     return
 
 
