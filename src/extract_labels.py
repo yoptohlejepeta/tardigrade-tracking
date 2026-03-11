@@ -10,12 +10,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.info import loginfo
 from src.watershed.process import watershed_pipe
+from src.watershed.process_gpu import watershed_pipe as watershed_gpu
 
 
 def process_frame(args):
-    frame_num, image, output_dir = args
+    frame_num, image, output_dir, pipe_f = args
     try:
-        labels = watershed_pipe(image=image)
+        labels = pipe_f(image=image)
         output_path = f"{output_dir}/frame_{frame_num:06d}.npy"
         np.save(output_path, labels)
         loginfo(f"Frame {frame_num}: extracted and saved labels")
@@ -62,13 +63,26 @@ class Arguments(BaseSettings):
             validation_alias=AliasChoices("s", "frame_step"),
         ),
     ] = 1
+    gpu: Annotated[
+        bool,
+        Field(
+            title="GPU",
+            validation_alias=AliasChoices("g", "gpu"),
+        ),
+    ] = False
 
 
 def main():
     args = Arguments()  # pyright: ignore[reportCallIssue]
     num_workers = max(1, args.n_workers)
-    batch_size = 5
+    batch_size = 50
     loginfo(f"Using {num_workers} workers with batch size {batch_size}")
+
+    if args.gpu:
+        loginfo("Running with GPU.")
+        pipe_f = watershed_gpu
+    else:
+        pipe_f = watershed_pipe
 
     for file in args.input_path.glob(args.pattern):
         frame_iter = iio.imiter(file)
@@ -83,11 +97,9 @@ def main():
         with Pool(num_workers) as pool:
             for image in frame_iter:
                 if frame_num % args.frame_step == 0:
-                    batch_args.append((frame_num, image, output_dir))
+                    batch_args.append((frame_num, image, output_dir, pipe_f))
                     if len(batch_args) >= batch_size:
-                        batch_results = pool.map_async(process_frame, batch_args).get(
-                            timeout=60
-                        )
+                        batch_results = pool.map_async(process_frame, batch_args).get()
                         for err in batch_results:
                             if err:
                                 all_errors.append(err)
