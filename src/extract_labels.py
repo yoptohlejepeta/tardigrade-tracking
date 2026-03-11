@@ -70,10 +70,17 @@ class Arguments(BaseSettings):
             validation_alias=AliasChoices("g", "gpu"),
         ),
     ] = False
+    max_seconds: Annotated[
+        int,
+        Field(
+            title="Max seconds to extract (from start)",
+            validation_alias=AliasChoices("t", "max_seconds"),
+        ),
+    ] = 60
 
 
 def main():
-    args = Arguments()  # pyright: ignore[reportCallIssue]
+    args = Arguments()  # ty:ignore[missing-argument]
     num_workers = max(1, args.n_workers)
     batch_size = 50
     loginfo(f"Using {num_workers} workers with batch size {batch_size}")
@@ -85,6 +92,14 @@ def main():
         pipe_f = watershed_pipe
 
     for file in args.input_path.glob(args.pattern):
+        # Get video FPS to calculate max frames
+        meta = iio.immeta(file)
+        fps = meta.get("fps", 30)  # default to 30 if not available
+        max_frames = int(fps * args.max_seconds)
+        loginfo(
+            f"Video FPS: {fps}, processing first {args.max_seconds}s ({max_frames} frames)"
+        )
+
         frame_iter = iio.imiter(file)
         batch_args = []
         all_errors = []
@@ -96,6 +111,8 @@ def main():
 
         with Pool(num_workers) as pool:
             for image in frame_iter:
+                if frame_num >= max_frames:
+                    break
                 if frame_num % args.frame_step == 0:
                     batch_args.append((frame_num, image, output_dir, pipe_f))
                     if len(batch_args) >= batch_size:
