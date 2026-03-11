@@ -3,6 +3,7 @@ from collections import deque
 from pathlib import Path
 from typing import Annotated
 
+import imageio.v3 as iio
 import numpy as np
 import pandas as pd
 from pydantic import AliasChoices, Field
@@ -20,8 +21,15 @@ class Arguments(BaseSettings):
     input_path: Annotated[
         Path,
         Field(
-            title="Input directory with .npy files",
+            title="Input directory with .npy label files",
             validation_alias=AliasChoices("i", "input_path"),
+        ),
+    ]
+    video_path: Annotated[
+        Path,
+        Field(
+            title="Input video file",
+            validation_alias=AliasChoices("v", "video_path"),
         ),
     ]
     output_path: Annotated[
@@ -105,7 +113,7 @@ def main():
     args = Arguments()
 
     npy_files = sorted(args.input_path.glob("frame_*.npy"))
-    loginfo(f"Found {len(npy_files)} .npy files")
+    loginfo(f"Found {len(npy_files)} .npy label files")
     loginfo(f"Using lookback of {args.lookback_frames} frames")
     loginfo(f"Max distance: {args.max_distance_percent}% of major axis length")
 
@@ -134,14 +142,15 @@ def main():
     ]
     pd.DataFrame(columns=csv_columns).to_csv(csv_path, index=False)
 
+    frame_iter = iio.imiter(args.video_path)
+    loginfo(f"Loading video: {args.video_path}")
+
     history = deque(maxlen=args.lookback_frames)
     next_id = 1
     all_data = []
 
-    for frame_num, npy_file in enumerate(npy_files):
-        data = np.load(npy_file, allow_pickle=True).item()
-        image = data["image"]
-        labels = data["labels"]
+    for frame_num, (image, npy_file) in enumerate(zip(frame_iter, npy_files)):
+        labels = np.load(npy_file)
 
         regions = regionprops(labels)
         regions = [r for r in regions if r.label != 0]
