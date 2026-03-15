@@ -7,7 +7,6 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import marimo as mo
-    from pathlib import Path
     import numpy as np
     import imageio.v3 as iio
     from PIL import Image, ImageDraw, ImageFont
@@ -42,7 +41,6 @@ def _(labels_path, np):
 
 @app.cell
 def _(Image, ImageDraw, ImageFont, iio, label_ims, labels_path, mo, np):
-    import matplotlib.pyplot as plt
 
     colors = [
         [255, 0, 0],   # Red
@@ -67,11 +65,11 @@ def _(Image, ImageDraw, ImageFont, iio, label_ims, labels_path, mo, np):
             overlay[mask == obj_id] = color
 
         blended = (frame * (1 - alpha) + overlay * alpha).astype(np.uint8)
-    
+
         img = Image.fromarray(blended)
         draw = ImageDraw.Draw(img)
         font = ImageFont.load_default(size=24)
-    
+
         for obj_id in object_ids:
             y, x = np.where(mask == obj_id)
             if len(y) > 0:
@@ -79,7 +77,7 @@ def _(Image, ImageDraw, ImageFont, iio, label_ims, labels_path, mo, np):
                 for adj_x, adj_y in [(-2,-2), (-2,2), (2,-2), (2,2), (-2,0), (2,0), (0,-2), (0,2)]:
                     draw.text((cx+adj_x, cy+adj_y), str(obj_id), fill=(0, 0, 0), font=font)
                 draw.text((cx, cy), str(obj_id), fill=(255, 255, 0), font=font)
-    
+
         processed_frames.append(
             mo.image(
                 src=img, 

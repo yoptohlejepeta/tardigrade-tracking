@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 import pandas as pd
 import os
 from skimage.measure import regionprops
-from src.info import loginfo
+from src.log import loginfo
 from src.save import save_image
 from src.watershed.process import watershed_pipe
 from multiprocessing import Pool

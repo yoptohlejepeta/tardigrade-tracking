@@ -8,7 +8,7 @@ import numpy as np
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from src.info import loginfo
+from src.log import loginfo
 from src.watershed.process import watershed_pipe
 from src.watershed.process_gpu import watershed_pipe as watershed_gpu
 

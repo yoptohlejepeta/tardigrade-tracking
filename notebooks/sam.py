@@ -10,7 +10,6 @@ def _():
     import requests
 
     def download_sam(model_path: str):
-        import os
         if not os.path.exists(model_path):
             # url = https://github.com/ultralytics/assets/releases/download/v8.3.0/sam2_t.pt
             url = f"https://dl.fbaipublicfiles.com/segment_anything/{model_path}"
@@ -29,12 +28,8 @@ def _():
 @app.cell
 def _():
     import numpy as np
-    import torch
-    import cv2
-    from segment_anything import sam_model_registry, SamAutomaticMaskGenerator
     import imageio.v3 as iio
     import matplotlib.pyplot as plt
-    from skimage.filters import threshold_otsu
 
     # model_type = "vit_b"
     # device = "cuda" if torch.cuda.is_available() else "cpu"

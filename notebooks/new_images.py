@@ -7,10 +7,8 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import imageio.v3 as iio
-    import marimo as mo
     import matplotlib.pyplot as plt
     import numpy as np
-    from scipy import ndimage as ndi
 
     first_image = iio.imread("data/FC2.0.mkv", index=0)
     # first_image = first_image[:, 300:1500]
@@ -61,8 +59,6 @@ def _(gray, plt):
 @app.cell
 def _(gray, plt):
     from skimage.exposure import rescale_intensity
-    from skimage.io import imsave
-    from skimage import img_as_ubyte
 
 
     gray_rescaled = rescale_intensity(gray, in_range=(40, 200), out_range=(0, 255))
@@ -118,7 +114,7 @@ def _(gray_rescaled, plt):
 @app.cell
 def _(binaryYen, plt):
     # morhp clearing
-    from skimage.morphology import remove_small_objects, disk, erosion, opening, closing, dilation
+    from skimage.morphology import remove_small_objects, disk, opening
 
     mask_size = 5
     binaryCleaned = binaryYen

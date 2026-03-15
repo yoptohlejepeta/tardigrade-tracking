@@ -12,7 +12,7 @@ from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
 from skimage.measure import regionprops
 
-from src.info import loginfo
+from src.log import loginfo
 from src.save import save_image_with_boundaries
 
 
@@ -110,7 +110,7 @@ def track_objects_with_lookback(
 
 
 def main():
-    args = Arguments()
+    args = Arguments()  # ty:ignore[missing-argument]
 
     npy_files = sorted(args.input_path.glob("frame_*.npy"))
     loginfo(f"Found {len(npy_files)} .npy label files")
@@ -140,7 +140,7 @@ def main():
         "sphericity",
         "n_objects",
     ]
-    pd.DataFrame(columns=csv_columns).to_csv(csv_path, index=False)
+    pd.DataFrame(columns=csv_columns).to_csv(csv_path, index=False)  # ty:ignore[invalid-argument-type]
 
     frame_iter = iio.imiter(args.video_path)
     loginfo(f"Loading video: {args.video_path}")

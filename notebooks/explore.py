@@ -116,9 +116,9 @@ def _(custom_style, data, group, pygal, video):
             x_labels = [str(frame) if frame % 1000 == 0 else '' for frame in grouped_stats['frame']]
         )
 
-        line_chart_metric.add(f'Min', grouped_stats['min'].tolist(), )
-        line_chart_metric.add(f'Max', grouped_stats['max'].tolist(), )
-        line_chart_metric.add(f'Mean', grouped_stats['mean'].tolist(), )
+        line_chart_metric.add('Min', grouped_stats['min'].tolist(), )
+        line_chart_metric.add('Max', grouped_stats['max'].tolist(), )
+        line_chart_metric.add('Mean', grouped_stats['mean'].tolist(), )
 
         line_chart_metric.render_to_file(f"graphs/{group}/metrics/{video}_{metric}.svg")
     return

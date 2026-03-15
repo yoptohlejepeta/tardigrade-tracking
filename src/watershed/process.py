@@ -35,10 +35,10 @@ def watershed_pipe(image: np.ndarray) -> np.ndarray:
         footprint=disk(40),
         exclude_border=True,
     )
-    mask = np.zeros(distance.shape, dtype=bool)  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
+    mask = np.zeros(distance.shape, dtype=bool)
     mask[tuple(coords.T)] = True
-    markers, _ = ndi.label(input=mask)  # pyright: ignore[reportGeneralTypeIssues]
-    labels = watershed(-distance, markers, mask=removed, connectivity=2)  # pyright: ignore
+    markers, _ = ndi.label(input=mask)
+    labels = watershed(-distance, markers, mask=removed, connectivity=2)
     labels = clear_border(labels)
 
     return labels

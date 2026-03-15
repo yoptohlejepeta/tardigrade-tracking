@@ -138,7 +138,7 @@ def _(mo):
 
 @app.cell
 def _(otsu_image):
-    from skimage.morphology import remove_small_objects, opening, disk, erosion, dilation, remove_small_holes, closing
+    from skimage.morphology import remove_small_objects, opening, disk
 
     removed = opening(
         otsu_image,
@@ -167,9 +167,8 @@ def _(mo):
 
 @app.cell
 def _(disk, ndi, np, removed):
-    from skimage.segmentation import watershed, clear_border
+    from skimage.segmentation import watershed
     from skimage.feature import peak_local_max
-    from scipy import ndimage
 
     final_image = removed
 

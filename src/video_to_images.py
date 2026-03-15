@@ -6,7 +6,7 @@ import imageio.v3 as iio
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from src.info import loginfo
+from src.log import loginfo
 
 
 class Arguments(BaseSettings):
@@ -49,7 +49,7 @@ class Arguments(BaseSettings):
 
 
 def main():
-    args = Arguments()  # pyright: ignore[reportCallIssue]
+    args = Arguments()  # ty:ignore[missing-argument]
 
     if not args.input_path.exists():
         loginfo(f"Error: Input directory not found: {args.input_path}")
