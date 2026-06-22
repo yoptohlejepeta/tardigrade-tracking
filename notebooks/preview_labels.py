@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.19.6"
+__generated_with = "0.21.0"
 app = marimo.App(width="medium")
 
 
@@ -10,6 +10,7 @@ def _():
     import numpy as np
     import imageio.v3 as iio
     from PIL import Image, ImageDraw, ImageFont
+
     return Image, ImageDraw, ImageFont, iio, mo, np
 
 
@@ -35,7 +36,11 @@ def _(labels_path, np):
         labels = labels_path.path().glob("*.npy")
         label_ims = {}
         for label in labels:
-            label_ims[label.stem] = np.load(label)
+            # label_ims[label.stem] = np.load(label)
+            label_ims[label.stem] = np.load(label, allow_pickle=True).item()["labels"]
+            # print(np.load(label, allow_pickle=True))
+
+    # label_ims Úvod do evolučního modelování 
     return (label_ims,)
 
 
@@ -82,7 +87,7 @@ def _(Image, ImageDraw, ImageFont, iio, label_ims, labels_path, mo, np):
             mo.image(
                 src=img, 
                 caption=f"Frame: {num}",
-                width=800
+                # width=800
             )
         )
 

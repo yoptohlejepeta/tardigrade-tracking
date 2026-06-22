@@ -9,14 +9,6 @@ uv run python -m src.process_video -i data/T5.tuns.mkv -o processed_videos/Taxol
 > ```
 
 
-> [!NOTE]
-> copy all csv files
-> ```bash
-> rsync -avz -e "ssh -J pkotlan@10.12.0.5" --include='*/' --include='*.csv' --exclude='*' pkotlan@punta-gpus:/localdata/Scratch/zposelShare/CENAB/DATAImages/ .
-> ```
-
-
-
 ## Object tracking algoritmy
 
 - [Crocker-Grier](https://trackpy.readthedocs.io/en/stable/) 
@@ -24,6 +16,8 @@ uv run python -m src.process_video -i data/T5.tuns.mkv -o processed_videos/Taxol
 - [Introduction to Assignment Methods in Tracking Systems](https://www.mathworks.com/help/fusion/ug/introduction-to-assignment-methods-in-tracking-systems.html) 
 
 
+## Usage
 
+### Step 1: Segment (`extract_label.py`)
 
-
+### Step 2: Track objects (`track_and_visualize.py`)

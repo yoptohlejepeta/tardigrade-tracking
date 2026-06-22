@@ -229,6 +229,6 @@ labels/
 *.csv
 *.png
 *.npy
+*.npz
+*.zip
 *.mkv
-tif_stacks/
-kontrola/

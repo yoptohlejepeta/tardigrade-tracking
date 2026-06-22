@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.17.2"
+__generated_with = "0.21.0"
 app = marimo.App(width="medium")
 
 
@@ -10,7 +10,7 @@ def _():
     import matplotlib.pyplot as plt
     import numpy as np
 
-    first_image = iio.imread("data/FC2.0.mkv", index=0)
+    first_image = iio.imread("new_images/FC1.0.mkv", index=0)
     # first_image = first_image[:, 300:1500]
 
     plt.axis('off')

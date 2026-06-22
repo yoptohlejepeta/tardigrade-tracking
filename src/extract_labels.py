@@ -10,7 +10,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.log import loginfo
 from src.watershed.process import watershed_pipe
-from src.watershed.process_gpu import watershed_pipe as watershed_gpu
 
 
 def process_frame(args):
@@ -86,15 +85,16 @@ def main():
     loginfo(f"Using {num_workers} workers with batch size {batch_size}")
 
     if args.gpu:
+        from src.watershed.process_gpu import watershed_pipe as watershed_gpu
+
         loginfo("Running with GPU.")
         pipe_f = watershed_gpu
     else:
         pipe_f = watershed_pipe
 
     for file in args.input_path.glob(args.pattern):
-        # Get video FPS to calculate max frames
         meta = iio.immeta(file)
-        fps = meta.get("fps", 30)  # default to 30 if not available
+        fps = meta.get("fps", 30)
         max_frames = int(fps * args.max_seconds)
         loginfo(
             f"Video FPS: {fps}, processing first {args.max_seconds}s ({max_frames} frames)"
