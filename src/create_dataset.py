@@ -23,7 +23,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.log import loginfo
 from src.watershed.process import watershed_pipe
-from src.watershed.process_gpu import watershed_pipe as watershed_gpu
 
 
 def process_video(args):
@@ -94,6 +93,8 @@ def main():
     loginfo(f"Creating dataset from first frame of videos using {num_workers} workers")
 
     if args.gpu:
+        from src.watershed.process_gpu import watershed_pipe as watershed_gpu
+
         loginfo("Running with GPU.")
         pipe_f = watershed_gpu
     else:
